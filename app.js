@@ -301,8 +301,11 @@ function initBeforeAfterSlider() {
   if (!container || !handle) return;
   
   let isDragging = false;
+  let clientX = 0;
+  let rafId = null;
   
-  function updateSlider(clientX) {
+  function updateSlider() {
+    if (!isDragging) return;
     const rect = container.getBoundingClientRect();
     let percentage = ((clientX - rect.left) / rect.width) * 100;
     
@@ -310,26 +313,40 @@ function initBeforeAfterSlider() {
     if (percentage < 0) percentage = 0;
     if (percentage > 100) percentage = 100;
     
-    // Set custom property for CSS clip-path inset
     container.style.setProperty('--slide-pos', `${percentage}%`);
+  }
+  
+  function tick() {
+    updateSlider();
+    if (isDragging) {
+      rafId = requestAnimationFrame(tick);
+    }
   }
   
   // Drag functions
   function onStart(e) {
-    e.preventDefault(); // Prevents browser image ghost-dragging blockages
+    // Prevent default to stop page scroll interference during drag on mobile
+    if (e.type === 'touchstart') {
+      clientX = e.touches[0].clientX;
+    } else {
+      e.preventDefault();
+      clientX = e.clientX;
+    }
     isDragging = true;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    updateSlider(clientX);
+    rafId = requestAnimationFrame(tick);
   }
   
   function onMove(e) {
     if (!isDragging) return;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    updateSlider(clientX);
+    clientX = e.touches ? e.touches[0].clientX : e.clientX;
   }
   
   function onEnd() {
     isDragging = false;
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
   }
   
   // Bind touch & mouse events directly to container for drag flexibility
@@ -337,8 +354,8 @@ function initBeforeAfterSlider() {
   window.addEventListener('mousemove', onMove);
   window.addEventListener('mouseup', onEnd);
   
-  container.addEventListener('touchstart', onStart);
-  window.addEventListener('touchmove', onMove);
+  container.addEventListener('touchstart', onStart, { passive: true });
+  window.addEventListener('touchmove', onMove, { passive: true });
   window.addEventListener('touchend', onEnd);
 }
 

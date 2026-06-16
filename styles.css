@@ -548,6 +548,8 @@ body {
   height: 100%;
   z-index: 2;
   clip-path: inset(0 0 0 var(--slide-pos));
+  will-change: clip-path;
+  transform: translateZ(0);
 }
 
 .after-image-wrapper .slider-img {
@@ -591,7 +593,8 @@ body {
   height: 100%;
   background-color: var(--accent-red);
   z-index: 10;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateZ(0);
+  will-change: left;
   pointer-events: none;
 }
 
